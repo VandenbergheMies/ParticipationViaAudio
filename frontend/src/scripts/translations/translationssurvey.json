@@ -1,0 +1,20 @@
+{
+    "en": {
+        "welcomeTitle": "Welcome to the survey",
+        "surveyIntro": "The survey comprises 4 questions. Question 1 is custom, followed by 3 AI-generated questions.",
+        "startRecording": "Start Recording",
+        "stopRecording": "Stop Recording",
+        "generateQuestions": "Generate Questions",
+        "review": "Review",
+        "questionCounter": "Question {current} of {total}"
+    },
+    "nl": {
+        "welcomeTitle": "Welkom bij de enquête",
+        "surveyIntro": "De enquête bestaat uit 4 vragen. Vraag 1 is aangepast, gevolgd door 3 AI-gegenereerde vragen.",
+        "startRecording": "Start Opname",
+        "stopRecording": "Stop Opname",
+        "generateQuestions": "Genereer Vragen",
+        "review": "Overzicht",
+        "questionCounter": "Vraag {current} van {total}"
+    }
+}

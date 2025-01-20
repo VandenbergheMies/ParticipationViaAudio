@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Survey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-200">
+    <div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto">
+            <!-- Welcome Screen Section -->
+            <div id="welcomeSection" class="bg-white shadow-lg rounded-lg p-6">
+                <h1 id="surveyTitle" class="text-3xl font-bold text-gray-800 mb-4" data-translate="surveyTitle">
+                    Welcome to the <span id="titlePlaceholder" data-translate="titlePlaceholder">Loading...</span>
+                </h1>                
+                <p id="surveyDescription" class="text-lg text-gray-700 mb-6">
+                    <span id="descriptionPlaceholder">Loading...</span>
+                </p>
+                
+                <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                    <p class="text-gray-600" data-translate="surveyintro">
+                        The survey comprises <strong>4 questions</strong>. <strong>Question 1</strong> is created by the survey creator, followed by <strong>3 personalized AI-generated questions</strong>. After completing the survey, you can review and submit your responses.
+                    </p>
+                </div>
+                
+                <!-- Consent Checkbox -->
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="consentCheckbox" class="mr-2">
+                    <label for="consentCheckbox" class="text-gray-700" data-translate="consentText">I agree to participate in this survey.</label>
+                </div>
+
+                <div class="fixed top-4 right-4">
+                    <button id="ttsToggle" class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">
+                        <svg id="ttsIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M9.657 7.343L5 12h2a10 10 0 01-.485 2m0 0L4 17h3l4-5v-5z"/>
+                        </svg>
+                        <span id="ttsStatus">Enable TTS</span>
+                    </button>
+                </div>
+            
+                <!-- Start Survey Button -->
+                <button id="startSurveyButton" onclick="startSurvey()" data-translate="startSurvey" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:opacity-50" disabled>
+                    Start Survey
+                </button>
+            </div>
+            
+            <!-- Survey Section -->
+            <div id="surveySection" class="bg-white shadow-lg rounded-lg p-6 hidden">
+                <div id="questionSection">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2" data-translate="question">Question 1</h2>
+                    <p class="text-lg text-gray-700 mb-4" id="questionText">Why did you choose our school?</p>
+
+                    <div class="space-y-4">
+                        <button id="recordButton" class="flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-500 text-white">
+                            <svg id="micIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                            </svg>
+                            <span id="recordButtonText" data-translate="startRecording">Start Recording</span>
+                        </button>
+
+                        <div id="processingIndicator" class="hidden">
+                            <div class="flex items-center justify-center space-x-2">
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                                <span class="text-gray-600" data-translate="processing">Processing...</span>
+                            </div>
+                        </div>
+
+                        <div id="errorAlert" class="hidden bg-red-50 text-red-500 p-4 rounded-lg"></div>
+                    </div>
+
+                    <div class="space-y-6 mt-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-2" data-translate="yourResponse">Your Response</h3>
+                            <!-- View mode -->
+                            <div id="responseViewMode">
+                                <div id="originalTranscript" class="p-4 bg-gray-100 rounded min-h-[200px]" data-translate="responseWillAppear">
+                                    Your response will appear here...
+                                </div>
+                                <button id="editButton" onclick="enableEditMode()" data-translate="editButton" class="mt-2 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 hidden">
+                                    Edit Response
+                                </button>
+                            </div>
+                            
+                            <!-- Edit mode -->
+                            <div id="responseEditMode" class="hidden">
+                                <textarea
+                                    id="responseEditor"
+                                    class="w-full p-4 border rounded min-h-[200px]"
+                                    style="resize: vertical;"
+                                ></textarea>
+                                <div class="mt-2 space-x-2">
+                                    <button onclick="cancelEdit()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                                        Cancel
+                                    </button>
+                                    <button onclick="saveAndConfirm()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <div class="flex justify-between items-center">
+                            <button onclick="previousQuestion()" id="previousButton" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50" data-translate="previous">Previous</button>
+                            <p class="text-sm text-gray-600" id="questionCounter">Question 1 of 4</p>
+                            <button onclick="nextQuestion()" id="nextButton" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" data-translate="next">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reviewSection" class="hidden">
+                    <h2 class="text-2xl font-semibold mb-6" data-translate="reviewAnswers">Review Your Answers</h2>
+                    <div id="reviewResponses" class="space-y-6"></div>
+                    <button onclick="submitSurvey()" class="mt-6 w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600" data-translate="submitSurvey">
+                        Submit Survey
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="scripts/surveyscript.js"></script>
+    <script src="scripts/tts.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Homepage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-200 min-h-screen flex flex-col">
+    <header class="flex items-center justify-center px-6 py-4">
+        <div id="language-selection" class="absolute top-4 right-4">
+            <label for="language-select" class="mr-2">Language:</label>
+            <select id="language-select" class="py-1 px-2 rounded bg-white text-black">
+                <option value="nl">Nederlands</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+        <div class="text-center">
+            <h1 id="welcome-title" class="text-3xl font-bold"></h1>
+            <p id="welcome-description" class="mt-2 text-lg max-w-3xl"></p>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <section id="survey-list" class="max-w-4xl mx-auto mt-8 p-4 bg-white rounded shadow">
+            <h2 id="survey-header" class="text-xl font-semibold text-center mb-4"></h2>
+            <ul id="survey-container" class="space-y-4">
+                <!-- Surveys will be dynamically loaded here -->
+            </ul>
+        </section>
+    </main>
+
+    <footer class="py-4 text-center">
+        <p id="footer-text"></p>
+    </footer>
+    <script src="scripts/homescript.js"></script>
+</body>
+</html>
