@@ -3,7 +3,7 @@ async function getSurveyDetails(surveyId) {
     const deleteButton = document.getElementById("deleteButton");
 
     try {
-        const response = await fetch(`http://localhost:8000/api/admin/surveys/${surveyId}`);
+        const response = await fetch(`http://localhost:8000/api/surveys/${surveyId}`);
         if (!response.ok) {
             throw new Error("Failed to fetch survey details.");
         }

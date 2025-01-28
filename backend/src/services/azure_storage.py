@@ -117,6 +117,22 @@ class AzureStorage:
             return surveys
         except Exception as e:
             raise Exception(f"Failed to fetch surveys: {str(e)}")
+        
+    def download_answers_as_json(self, output_file: str = "answers.json"):
+        """
+        Fetch answers and save them as a JSON file locally.
+        """
+        try:
+            # Fetch answers from the container
+            answers = self.fetch_answers()
+            
+            # Save to a JSON file
+            with open(output_file, 'w', encoding='utf-8') as json_file:
+                json.dump(answers, json_file, ensure_ascii=False, indent=4)
+            
+            return f"Answers successfully saved to {output_file}"
+        except Exception as e:
+            raise Exception(f"Failed to download answers as JSON: {str(e)}")
 
 
 # Initialize AzureStorage instance

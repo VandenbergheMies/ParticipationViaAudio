@@ -1,14 +1,16 @@
 from typing import List
 import requests
 import re
+from .thematic_analyzer import ThematicAnalyzer
 
 class QuestionGenerator:
     def __init__(self):
         self.api_url = "http://localhost:11434/api/generate"
         
     def clean_question(self, question: str) -> str:
-        """Clean and format a single question."""
-        question = question.split('?')[0] + '?'
+        if '?' in question:
+            parts = question.split('?')
+            question = '?'.join(parts[:-1]) + '?'
         
         patterns = [
             (r'^\s*\d+[\.\)]\s*', ''),
@@ -24,14 +26,28 @@ class QuestionGenerator:
             
         return question.strip()
 
-    def generate_questions(self, text: str) -> List[str]:
-        prompt = (
-            f"Based on this student's response: '{text}', generate 3 short but sweet follow-up questions about their experience at our school.\n"
-            "Focus on topics like the campus environment, facilities and how they feel about being part of the school community.\n"
-            "Keep the questions professional, engaging, and open-ended. Do not use any locations or names nor ask for.\n"
-            "Format: Q1:, Q2:, Q3:"
-        )
-        
+    def generate_questions(self, text: str, language: str = "nl") -> List[str]:
+        if language == "nl":
+            prompt = (
+                f"Gegeven het antwoord van de student over hun studiekeuze: '{text}'\n\n"
+                "Genereer 3 Nederlandse vervolgvragen die:\n"
+                "- Direct ingaan op de genoemde details\n"
+                "- De motivaties en ervaringen verkennen\n"
+                "- Het besluitvormingsproces helpen begrijpen\n"
+                "- Privacy respecteren\n\n"
+                "Formatteer elke vraag als 'V1:', 'V2:', 'V3:' gevolgd door je vraag.\n"
+            )
+        else:
+            prompt = (
+                f"Based on the student's response: '{text}'\n\n"
+                "Generate 3 follow-up questions that:\n"
+                "- Directly relate to specific details mentioned\n"
+                "- Explore their motivations and experiences\n"
+                "- Help understand their decision-making process\n"
+                "- Maintain privacy\n\n"
+                "Format each question as 'Q1:', 'Q2:', 'Q3:' followed by your question.\n"
+            )
+
         try:
             response = requests.post(
                 self.api_url,
@@ -44,27 +60,18 @@ class QuestionGenerator:
             response.raise_for_status()
             generated_text = response.json()["response"]
             
-            questions = re.findall(r'Q\d:\s*([^\n]+)', generated_text)
+            questions = []
+            for line in generated_text.split('\n'):
+                if ('?' in line) and (line.strip().startswith('V') or line.strip().startswith('Q')):
+                    question = re.sub(r'^[VQ]\d:\s*', '', line.strip())
+                    questions.append(question)
+            
             return [self.clean_question(q) for q in questions[:3]]
             
-        except Exception as e:
-            print(f"Error generating questions: {str(e)}")
-            return [
-                "What aspects of the campus facilities do you find most helpful for your studies?",
-                "How has your experience been with the school community so far?",
-                "What activities or programs would you like to see more of at our school?"
-            ]
-        
-    def process_survey_batch(self, original_responses: List[str], anonymized_responses: List[str]) -> dict:
-        """Process a batch of survey responses with theme extraction and follow-up questions"""
-        themes = self.thematic_analyzer.extract_themes(original_responses)
-        
-        all_follow_up_questions = []
-        for response in anonymized_responses:
-            questions = self.generate_questions(response)
-            all_follow_up_questions.extend(questions)
-            
-        return {
-            "themes": themes,
-            "follow_up_questions": all_follow_up_questions
-        }
+        except requests.RequestException as e:
+            print(f"An error occurred: {e}")
+            return []
+
+    def analyze_themes(self, text: str) -> dict:
+        analyzer = ThematicAnalyzer()
+        return analyzer.analyze(text)

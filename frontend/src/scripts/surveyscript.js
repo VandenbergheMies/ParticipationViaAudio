@@ -4,14 +4,12 @@ let mediaRecorder = null;
 let audioChunks = [];
 let questions = [];
 let responses = [];
-let ttsEnabled = false;
-const synth = window.speechSynthesis;
-const ttsManager = window.TTSManager;
 
 const translations = {
     en: {
         surveyTitle: "Welcome to the",
-        surveyintro: "The survey comprises 4 questions. Question 1 is created by the survey creator, followed by 3 personalized AI-generated questions. After completing the survey, you can review and submit your responses.",
+        backToHome: "Back to Home",
+        surveyintro: "The survey comprises 4 questions. Question 1 is created by the survey creator, followed by 3 personalized AI-generated questions. After completing the survey, you can review and submit your responses. Before your responses are submitted, everything is anonymized.",
         titlePlaceholder: "Survey",
         consentText: "I agree to participate in this survey.",
         generateQuestions: "Generate Questions",
@@ -32,7 +30,8 @@ const translations = {
     },
     nl: {
         surveyTitle: "Welkom bij de",
-        surveyintro: "De enquête bestaat uit 4 vragen. Vraag 1 wordt gemaakt door de maker van de enquête, gevolgd door 3 gepersonaliseerde, door AI gegenereerde vragen. Nadat u de enquête heeft ingevuld, kunt u uw antwoorden bekijken en verzenden.",
+        backToHome: "Terug naar Home",
+        surveyintro: "De enquête bestaat uit 4 vragen. Vraag 1 wordt gemaakt door de maker van de enquête, gevolgd door 3 gepersonaliseerde, door AI gegenereerde vragen. Nadat u de enquête heeft ingevuld, kunt u uw antwoorden bekijken en verzenden. Voordat uw antwoorden verstuurd wordt alles geanonimiseerd.",
         titlePlaceholder: "Enquête",
         consentText: "Ik ga akkoord met deelname aan deze enquête.",
         generateQuestions: "Genereer Vragen",
@@ -53,46 +52,17 @@ const translations = {
     }
 };
 
-function toggleTTS() {
-    ttsEnabled = !ttsEnabled;
-    const ttsStatus = document.getElementById('ttsStatus');
-    ttsStatus.textContent = ttsEnabled ? 'Disable TTS' : 'Enable TTS';
-    localStorage.setItem('ttsEnabled', ttsEnabled.toString());
-    
-    if (!ttsEnabled && synth.speaking) {
-        synth.cancel();
-    }
+
+function confirmLeave() {
+    // Show the confirmation dialog
+    return confirm("Are you sure you want to leave? Your progress may not be saved.");
 }
 
-function speakText(text) {
-    if (!ttsEnabled || !text) return;
-    
-    if (synth.speaking) {
-        synth.cancel();
-    }
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language === 'nl' ? 'nl-NL' : 'en-US';
-    synth.speak(utterance);
+function confirmSubmit() {
+    // Show the confirmation dialog
+    return confirm("Are you sure you want to submit the survey?");
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // Initialize TTS
-    const savedTTSState = localStorage.getItem('ttsEnabled') === 'true';
-    ttsEnabled = savedTTSState;
-    const ttsStatus = document.getElementById('ttsStatus');
-    ttsStatus.textContent = ttsEnabled ? 'Disable TTS' : 'Enable TTS';
-    
-    document.getElementById('ttsToggle').addEventListener('click', toggleTTS);
-
-    // Add TTS to question display
-    const originalUpdateQuestionCounter = updateQuestionCounter;
-    updateQuestionCounter = function(lang) {
-        originalUpdateQuestionCounter(lang);
-        const questionText = document.getElementById('questionText').textContent;
-        speakText(questionText);
-    };
-});
 
 function updateText(language) {
     document.querySelectorAll('[data-translate]').forEach(element => {
@@ -464,6 +434,14 @@ function saveAndGenerateQuestions() {
 
 // Submit the survey
 async function submitSurvey() {
+    // Show a confirmation dialog
+    const userConfirmed = confirm("Are you sure you want to submit the survey? You won't be able to make changes after submission.");
+
+    if (!userConfirmed) {
+        // User canceled submission
+        return;
+    }
+
     try {
         // First save any pending edits
         responses.forEach((_, index) => {
@@ -473,6 +451,16 @@ async function submitSurvey() {
             }
         });
 
+        const themesResponse = await fetch('http://localhost:8000/api/analyze-themes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                responses: responses.filter(r => r).map(r => r.original)
+            })
+        });
+
+        const themesData = await themesResponse.json();
+
         const surveyData = {
             responses: responses.filter(r => r).map((response, index) => ({
                 question_number: index + 1,
@@ -480,7 +468,8 @@ async function submitSurvey() {
                 transcription: response.original,
                 question: response.question
             })),
-            questions: questions
+            questions: questions,
+            themes: themesData.themes || []
         };
 
         const response = await fetch('http://localhost:8000/api/submit-survey', {

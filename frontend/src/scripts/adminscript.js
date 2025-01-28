@@ -67,3 +67,50 @@ async function loadSurveysForModification() {
 
 // Load surveys when the page is ready
 document.addEventListener("DOMContentLoaded", loadSurveysForModification);
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Add event listener for the "Download All Surveys as JSON" button
+    const downloadButton = document.getElementById("downloadJsonButton");
+
+    downloadButton.addEventListener("click", async () => {
+        try {
+            // Fetch surveys data from the backend API
+            const response = await fetch("/api/surveys", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            // Check if the request was successful
+            if (!response.ok) {
+                throw new Error(`Failed to fetch surveys: ${response.statusText}`);
+            }
+
+            const surveys = await response.json();
+
+            // Convert the surveys data to a JSON string
+            const jsonString = JSON.stringify(surveys, null, 2);
+
+            // Create a Blob from the JSON string
+            const blob = new Blob([jsonString], { type: "application/json" });
+
+            // Create a temporary link to trigger the download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "surveys.json"; // Name of the downloaded file
+            document.body.appendChild(a);
+            a.click();
+
+            // Clean up
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            console.log("Surveys downloaded successfully.");
+        } catch (error) {
+            console.error("Error downloading surveys:", error.message);
+            alert("Failed to download surveys. Please try again later.");
+        }
+    });
+});
